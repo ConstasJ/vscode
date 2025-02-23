@@ -104,6 +104,12 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 			}
 		}));
 
+		// this._register(vscode.window.onDidChangeTextEditorVisibleRanges(event => {
+		// 	if (this.isPreviewOf(event.textEditor.document.uri)) {
+		// 		this.refresh(true);
+		// 	}
+		// }));
+
 		this._register(vscode.workspace.onDidOpenTextDocument(document => {
 			if (this.isPreviewOf(document.uri)) {
 				this.refresh();
@@ -273,7 +279,7 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 
 		const content = await (shouldReloadPage
 			? this._contentProvider.renderDocument(document, this, this._previewConfigurations, this._line, selectedLine, this.state, this._imageInfo, this._disposeCts.token)
-			: this._contentProvider.renderBody(document.getText(), this));
+			: this._contentProvider.renderBody(document, this));
 
 		// Another call to `doUpdate` may have happened.
 		// Make sure we are still updating for the correct document

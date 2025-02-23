@@ -85,17 +85,7 @@ export class MdDocumentRenderer {
 		const nonce = getNonce();
 		const csp = this._getCsp(resourceProvider, sourceUri, nonce);
 
-		let filteredMarkdown = '';
-		const editor = vscode.window.activeTextEditor;
-		if (editor && editor.visibleRanges.length > 0) {
-			for (const range of editor.visibleRanges) {
-				filteredMarkdown += markdownDocument.getText(range) + '\n';
-			}
-		} else {
-			filteredMarkdown = markdownDocument.getText();
-		}
-
-		const body = await this.renderBody(filteredMarkdown, resourceProvider);
+		const body = await this.renderBody(markdownDocument, resourceProvider);
 		if (token.isCancellationRequested) {
 			return { html: '', containingImages: new Set() };
 		}
@@ -125,12 +115,21 @@ export class MdDocumentRenderer {
 	}
 
 	public async renderBody(
-		markdownDocument: string,
+		markdownDocument: vscode.TextDocument,
 		resourceProvider: WebviewResourceProvider,
 	): Promise<MarkdownContentProviderOutput> {
-		const rendered = await this._engine.render(markdownDocument, resourceProvider);
-		const lineCount = markdownDocument.split(/\r\n|\r|\n/).length;
-		const html = `<div class="markdown-body" dir="auto">${rendered.html}<div class="code-line" data-line="${lineCount}"></div></div>`;
+		let filteredMarkdown = '';
+		const editor = vscode.window.activeTextEditor;
+		if (editor && editor.visibleRanges.length > 0) {
+			for (const range of editor.visibleRanges) {
+				filteredMarkdown += markdownDocument.getText(range) + '\n';
+			}
+		} else {
+			filteredMarkdown = markdownDocument.getText();
+		}
+
+		const rendered = await this._engine.render(filteredMarkdown, resourceProvider);
+		const html = `<div class="markdown-body" dir="auto">${rendered.html}<div class="code-line" data-line="${markdownDocument.lineCount}"></div></div>`;
 		return {
 			html,
 			containingImages: rendered.containingImages
