@@ -273,7 +273,7 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 
 		const content = await (shouldReloadPage
 			? this._contentProvider.renderDocument(document, this, this._previewConfigurations, this._line, selectedLine, this.state, this._imageInfo, this._disposeCts.token)
-			: this._contentProvider.renderBody(document, this));
+			: this._contentProvider.renderBody(document.getText(), this));
 
 		// Another call to `doUpdate` may have happened.
 		// Make sure we are still updating for the correct document

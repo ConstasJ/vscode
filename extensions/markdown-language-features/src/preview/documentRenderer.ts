@@ -95,12 +95,7 @@ export class MdDocumentRenderer {
 			filteredMarkdown = markdownDocument.getText();
 		}
 
-		const virtualDocument = await vscode.workspace.openTextDocument({
-			content: filteredMarkdown,
-			language: 'markdown'
-		});
-
-		const body = await this.renderBody(virtualDocument, resourceProvider);
+		const body = await this.renderBody(filteredMarkdown, resourceProvider);
 		if (token.isCancellationRequested) {
 			return { html: '', containingImages: new Set() };
 		}
@@ -130,11 +125,12 @@ export class MdDocumentRenderer {
 	}
 
 	public async renderBody(
-		markdownDocument: vscode.TextDocument,
+		markdownDocument: string,
 		resourceProvider: WebviewResourceProvider,
 	): Promise<MarkdownContentProviderOutput> {
 		const rendered = await this._engine.render(markdownDocument, resourceProvider);
-		const html = `<div class="markdown-body" dir="auto">${rendered.html}<div class="code-line" data-line="${markdownDocument.lineCount}"></div></div>`;
+		const lineCount = markdownDocument.split(/\r\n|\r|\n/).length;
+		const html = `<div class="markdown-body" dir="auto">${rendered.html}<div class="code-line" data-line="${lineCount}"></div></div>`;
 		return {
 			html,
 			containingImages: rendered.containingImages
