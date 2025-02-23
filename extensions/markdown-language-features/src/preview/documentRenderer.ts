@@ -85,7 +85,22 @@ export class MdDocumentRenderer {
 		const nonce = getNonce();
 		const csp = this._getCsp(resourceProvider, sourceUri, nonce);
 
-		const body = await this.renderBody(markdownDocument, resourceProvider);
+		let filteredMarkdown = '';
+		const editor = vscode.window.activeTextEditor;
+		if (editor && editor.visibleRanges.length > 0) {
+			for (const range of editor.visibleRanges) {
+				filteredMarkdown += markdownDocument.getText(range) + '\n';
+			}
+		} else {
+			filteredMarkdown = markdownDocument.getText();
+		}
+
+		const virtualDocument = await vscode.workspace.openTextDocument({
+			content: filteredMarkdown,
+			language: 'markdown'
+		});
+
+		const body = await this.renderBody(virtualDocument, resourceProvider);
 		if (token.isCancellationRequested) {
 			return { html: '', containingImages: new Set() };
 		}
