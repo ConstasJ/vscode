@@ -119,7 +119,7 @@ export class MdDocumentRenderer {
 		resourceProvider: WebviewResourceProvider,
 	): Promise<MarkdownContentProviderOutput> {
 		let filteredMarkdown = '';
-		const editor = vscode.window.activeTextEditor;
+		const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === markdownDocument.uri.toString());
 		if (editor && editor.visibleRanges.length > 0) {
 			for (const range of editor.visibleRanges) {
 				filteredMarkdown += markdownDocument.getText(range) + '\n';
