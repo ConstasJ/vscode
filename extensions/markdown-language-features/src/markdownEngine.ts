@@ -420,7 +420,7 @@ export class MarkdownItEngine implements IMdParser {
 			const lineAttr = token.attrGet('data-line');
 			const lineNumber = lineAttr ? ` data-line="${lineAttr}"` : '';
 
-			return `<div class="markdown-folding-indicator"${lineNumber}>
+			return `<div class="folding-indicator"${lineNumber}>
 				<div class="codicon codicon-fold-down"></div>
 			</div>`;
 		};

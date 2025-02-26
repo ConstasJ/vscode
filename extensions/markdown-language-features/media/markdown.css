@@ -307,7 +307,7 @@ pre {
 }
 
 /* Add these styles for the folding indicator */
-.markdown-folding-indicator {
+.folding-indicator {
 	display: flex;
 	align-items: center;
 	cursor: pointer;
@@ -320,11 +320,11 @@ pre {
 	position: absolute;
 }
 
-.markdown-folding-indicator:hover {
+.folding-indicator:hover {
 	opacity: 1;
 }
 
-.markdown-folding-indicator .codicon {
+.folding-indicator .codicon {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -334,18 +334,18 @@ pre {
 }
 
 /* Show the folding indicator when hovering over the line */
-.code-line:hover .markdown-folding-indicator {
+.code-line:hover .folding-indicator {
 	opacity: 1;
 }
 
 /* Always show the folding indicator when content is folded */
-.code-line.folded .markdown-folding-indicator {
+.code-line.folded .folding-indicator {
 	opacity: 1;
 }
 
 /* Reduce motion if user prefers */
 @media (prefers-reduced-motion) {
-	.markdown-folding-indicator {
+	.folding-indicator {
 		transition: none;
 	}
 }
