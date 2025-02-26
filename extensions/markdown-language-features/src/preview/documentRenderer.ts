@@ -122,10 +122,15 @@ export class MdDocumentRenderer {
 		const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === markdownDocument.uri.toString());
 		if (editor && editor.visibleRanges.length > 0) {
 			for (const range of editor.visibleRanges) {
-				filteredMarkdown += markdownDocument.getText(range) + '\n';
+				const text = markdownDocument.getText(range);
+				const lines = text.split('\n');
+				const processedText = lines.map(line => line + '  ').join('\n');
+				filteredMarkdown += processedText + '\n';
 			}
 		} else {
-			filteredMarkdown = markdownDocument.getText();
+			const text = markdownDocument.getText();
+			const lines = text.split('\n');
+			filteredMarkdown = lines.map(line => line + '  ').join('\n');
 		}
 
 		const rendered = await this._engine.render(filteredMarkdown, resourceProvider);
