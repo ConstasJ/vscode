@@ -13,6 +13,7 @@ import { Slugifier } from './slugify';
 import { ITextDocument } from './types/textDocument';
 import { WebviewResourceProvider } from './util/resources';
 import { isOfScheme, Schemes } from './util/schemes';
+import { isSpace } from 'markdown-it/lib/common/utils';
 
 /**
  * Adds begin line index to the output via the 'data-line' data attribute.
@@ -161,6 +162,8 @@ export class MarkdownItEngine implements IMdParser {
 				this._addLinkValidator(md);
 				this._addNamedHeaders(md);
 				this._addLinkRenderer(md);
+				this._addFoldingIndicatorRenderer(md);
+				this._addFoldingIndicatorParser(md);
 				md.use(pluginSourceMap);
 				return md;
 			})();
@@ -410,6 +413,50 @@ export class MarkdownItEngine implements IMdParser {
 			return href;
 		}
 	}
+
+	private _addFoldingIndicatorRenderer(md: MarkdownIt): void {
+		md.renderer.rules['folding_indicator'] = (tokens: Token[], idx: number, _options, _env, _self) => {
+			const token = tokens[idx];
+			const lineAttr = token.attrGet('data-line');
+			const lineNumber = lineAttr ? ` data-line="${lineAttr}"` : '';
+
+			return `<div class="markdown-folding-indicator"${lineNumber}>
+				<div class="codicon codicon-fold-down"></div>
+			</div>`;
+		};
+	}
+
+	private _addFoldingIndicatorParser(md: MarkdownIt): void {
+		md.block.ruler.before('table', 'folding_indicator', (state, startLine, _endLine, silent) => {
+			// get the start position of the current line (already considering the indentation)
+			let pos = state.bMarks[startLine] + state.tShift[startLine];
+			const max = state.eMarks[startLine];
+
+			// check if it's the first character
+			if (state.src.charCodeAt(pos) !== 0x2042) { return false; }
+
+			// ensure this is the only non-space character in the line
+			pos++;
+			while (pos < max) {
+				const ch = state.src.charCodeAt(pos);
+				if (!isSpace(ch)) { return false; }
+				pos++;
+			}
+
+			if (silent) { return true; }
+
+			// create a token
+			const token = state.push('folding_indicator', 'fi', 0);
+			token.map = [startLine, startLine + 1];
+			// allow-any-unicode-next-line
+			token.markup = '⁂';
+
+			state.line = startLine + 1;
+			return true;
+		});
+	}
+
+
 }
 
 async function getMarkdownOptions(md: () => MarkdownIt): Promise<MarkdownIt.Options> {
