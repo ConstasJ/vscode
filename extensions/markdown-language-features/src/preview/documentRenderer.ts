@@ -139,7 +139,7 @@ export class MdDocumentRenderer {
 							fold.start + 1 === lineNumber // 1-based line number
 						);
 						// allow-any-unicode-next-line
-						return (isFoldingStart ? '⁂ ' : '') + line + '  ';
+						return (isFoldingStart ? '⁂' : '') + line + '  ';
 					}).join('\n');
 					filteredMarkdown += processedText + '\n';
 				}
@@ -153,7 +153,7 @@ export class MdDocumentRenderer {
 						fold.start + 1 === lineNumber // 1-based line number
 					);
 					// allow-any-unicode-next-line
-					return (isFoldingStart ? '⁂ ' : '') + line + '  ';
+					return (isFoldingStart ? '⁂' : '') + line + '  ';
 				}).join('\n');
 			}
 		} else {
