@@ -120,12 +120,41 @@ export class MdDocumentRenderer {
 	): Promise<MarkdownContentProviderOutput> {
 		let filteredMarkdown = '';
 		const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === markdownDocument.uri.toString());
-		if (editor && editor.visibleRanges.length > 0) {
-			for (const range of editor.visibleRanges) {
-				const text = markdownDocument.getText(range);
+
+		if (editor) {
+			// get folding ranges
+			const foldingRanges = await vscode.commands.executeCommand<vscode.FoldingRange[]>(
+				'vscode.executeFoldingRangeProvider',
+				markdownDocument.uri
+			) || [];
+
+			if (editor.visibleRanges.length > 0) {
+				for (const range of editor.visibleRanges) {
+					const text = markdownDocument.getText(range);
+					const lines = text.split('\n');
+					const processedText = lines.map((line, i) => {
+						const lineNumber = range.start.line + i + 1; // 1-based line number
+						// check if the current line is a folding start
+						const isFoldingStart = foldingRanges.some(fold =>
+							fold.start + 1 === lineNumber // 1-based line number
+						);
+						// allow-any-unicode-next-line
+						return (isFoldingStart ? '⁂ ' : '') + line + '  ';
+					}).join('\n');
+					filteredMarkdown += processedText + '\n';
+				}
+			} else {
+				const text = markdownDocument.getText();
 				const lines = text.split('\n');
-				const processedText = lines.map(line => line + '  ').join('\n');
-				filteredMarkdown += processedText + '\n';
+				filteredMarkdown = lines.map((line, i) => {
+					const lineNumber = i + 1; // 1-based line number
+					// check if the current line is a folding start
+					const isFoldingStart = foldingRanges.some(fold =>
+						fold.start + 1 === lineNumber // 1-based line number
+					);
+					// allow-any-unicode-next-line
+					return (isFoldingStart ? '⁂ ' : '') + line + '  ';
+				}).join('\n');
 			}
 		} else {
 			const text = markdownDocument.getText();
