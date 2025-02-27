@@ -336,6 +336,18 @@ document.addEventListener('click', event => {
 	}
 
 	let node: any = event.target;
+	const foldingIndicator = node.closest('.folding-indicator');
+	if (foldingIndicator) {
+		const lineAttr = foldingIndicator.getAttribute('data-line');
+		if (lineAttr) {
+			const lineNumber = parseInt(lineAttr, 10);
+			const isCollapsed = foldingIndicator.querySelector('.codicon-chevron-right') !== null;
+			messaging.postMessage('toggleFolding', {
+				line: lineNumber,
+				isCollapsed: isCollapsed
+			});
+		}
+	}
 	while (node) {
 		if (node.tagName && node.tagName === 'A' && node.href) {
 			if (node.getAttribute('href').startsWith('#')) {
@@ -360,18 +372,6 @@ document.addEventListener('click', event => {
 			}
 
 			return;
-		}
-		const foldingIndicator = node.closest('.folding-indicator');
-		if (foldingIndicator) {
-			const lineAttr = foldingIndicator.getAttribute('data-line');
-			if (lineAttr) {
-				const lineNumber = parseInt(lineAttr, 10);
-				const isCollapsed = foldingIndicator.querySelector('.codicon-chevron-right') !== null;
-				messaging.postMessage('toggleFolding', {
-					line: lineNumber,
-					isCollapsed: isCollapsed
-				});
-			}
 		}
 		node = node.parentNode;
 	}

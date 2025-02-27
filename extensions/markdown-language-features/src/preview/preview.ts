@@ -445,15 +445,10 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 
 		if (editor) {
 			// 执行折叠/展开命令
-			await vscode.commands.executeCommand(
-				isCollapsed ? 'editor.unfold' : 'editor.fold',
-				{
-					selectionLines: [lineNumber]
-				}
-			);
+			editor.setFoldingState(lineNumber, isCollapsed);
 
 			// 刷新预览以反映新的折叠状态
-			this.refresh();
+			this.refresh(true);
 		}
 	}
 

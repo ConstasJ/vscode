@@ -576,6 +576,9 @@ export class ExtHostTextEditor {
 			},
 			[Symbol.for('debug.description')]() {
 				return `TextEditor(${this.document.uri.toString()})`;
+			},
+			setFoldingState(lineNumber: number, isCollapsed: boolean): Promise<void> {
+				return that.setFoldingState(lineNumber, isCollapsed);
 			}
 		});
 	}
@@ -683,5 +686,14 @@ export class ExtHostTextEditor {
 			}
 			return null;
 		});
+	}
+
+	async setFoldingState(lineNumber: number, isCollapsed: boolean): Promise<void> {
+		// 调用主线程的折叠命令
+		await this._proxy.$trySetFoldingState(
+			this.id,
+			lineNumber,
+			isCollapsed
+		);
 	}
 }

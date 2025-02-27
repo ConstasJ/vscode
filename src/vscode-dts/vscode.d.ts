@@ -1356,6 +1356,13 @@ declare module 'vscode' {
 		 * This method shows unexpected behavior and will be removed in the next major update.
 		 */
 		hide(): void;
+
+		/**
+		  * 折叠指定行的代码
+		  * @param lineNumber 要折叠的行号(0-based)
+		  * @param isCollapsed 是否折叠,true表示折叠,false表示展开
+		  */
+		setFoldingState(lineNumber: number, isCollapsed: boolean): Thenable<void>;
 	}
 
 	/**
