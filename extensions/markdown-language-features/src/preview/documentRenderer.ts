@@ -220,6 +220,10 @@ export class MdDocumentRenderer {
 		return out.join('\n');
 	}
 
+	private _getCodiconStyles(resourceProvider: WebviewResourceProvider): string {
+		return `<link rel="stylesheet" href="${escapeAttribute(resourceProvider.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css')))}">`;
+	}
+
 	private _getSettingsOverrideStyles(config: MarkdownPreviewConfiguration): string {
 		return [
 			config.fontFamily ? `--markdown-font-family: ${config.fontFamily};` : '',
@@ -253,7 +257,8 @@ export class MdDocumentRenderer {
 
 		return `${baseStyles.join('\n')}
 			${this._computeCustomStyleSheetIncludes(resourceProvider, resource, config)}
-			${this._getImageStabilizerStyles(imageInfo)}`;
+			${this._getImageStabilizerStyles(imageInfo)}
+			${this._getCodiconStyles(resourceProvider)}`;
 	}
 
 	private _getScripts(resourceProvider: WebviewResourceProvider, nonce: string): string {
