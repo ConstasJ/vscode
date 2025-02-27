@@ -13,7 +13,6 @@ import { Slugifier } from './slugify';
 import { ITextDocument } from './types/textDocument';
 import { WebviewResourceProvider } from './util/resources';
 import { isOfScheme, Schemes } from './util/schemes';
-import { isSpace } from 'markdown-it/lib/common/utils';
 
 /**
  * Adds begin line index to the output via the 'data-line' data attribute.
@@ -419,39 +418,38 @@ export class MarkdownItEngine implements IMdParser {
 			const token = tokens[idx];
 			const lineAttr = token.attrGet('data-line');
 			const lineNumber = lineAttr ? ` data-line="${lineAttr}"` : '';
+			const buttonType = token.markup === '▶' ? 'codicon-chevron-right' : 'codicon-chevron-down';
 
-			return `<div class="folding-indicator"${lineNumber}>
-				<div class="codicon codicon-fold-down"></div>
-			</div>`;
+			return `<span class="folding-indicator"${lineNumber}><span class="codicon ${buttonType}"></span></span>`;
 		};
 	}
 
 	private _addFoldingIndicatorParser(md: MarkdownIt): void {
 		md.block.ruler.before('table', 'folding_indicator', (state, startLine, _endLine, silent) => {
 			// get the start position of the current line (already considering the indentation)
-			let pos = state.bMarks[startLine] + state.tShift[startLine];
-			const max = state.eMarks[startLine];
-
+			const pos = state.bMarks[startLine] + state.tShift[startLine];
 			// check if it's the first character
-			if (state.src.charCodeAt(pos) !== 0x2042) { return false; }
-
-			// ensure this is the only non-space character in the line
-			pos++;
-			while (pos < max) {
-				const ch = state.src.charCodeAt(pos);
-				if (!isSpace(ch)) { return false; }
-				pos++;
-			}
+			if (state.src.charCodeAt(pos) !== 0x25B6 && state.src.charCodeAt(pos) !== 0x25BC) { return false; }
 
 			if (silent) { return true; }
 
-			// create a token
-			const token = state.push('folding_indicator', 'fi', 0);
-			token.map = [startLine, startLine + 1];
-			// allow-any-unicode-next-line
-			token.markup = '⁂';
+			let token: Token;
 
-			state.line = startLine + 1;
+			switch (state.src.charCodeAt(pos)) {
+				case 0x25B6:
+					token = state.push('folding_indicator', 'fi', 0);
+					token.markup = '▶';
+					break;
+				case 0x25BC:
+					token = state.push('folding_indicator', 'fi', 0);
+					token.markup = '▼';
+					break;
+				default:
+					return false;
+			}
+			token.map = [startLine, startLine + 1];
+
+			state.tShift[startLine]++;
 			return true;
 		});
 	}

@@ -42,6 +42,7 @@ import { CommandsRegistry } from '../../../../platform/commands/common/commands.
 import { URI } from '../../../../base/common/uri.js';
 import { IModelService } from '../../../common/services/model.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { ICodeEditorService } from '../../../browser/services/codeEditorService.js';
 
 const CONTEXT_FOLDING_ENABLED = new RawContextKey<boolean>('foldingEnabled', false);
 
@@ -1326,4 +1327,59 @@ CommandsRegistry.registerCommand('_executeFoldingRangeProvider', async function 
 	} finally {
 		rangeProvider.dispose();
 	}
+});
+
+CommandsRegistry.registerCommand('_executeFoldingStateProvider', async function (accessor, ...args) {
+	const [resource] = args;
+	if (!(resource instanceof URI)) {
+		throw illegalArgument();
+	}
+
+	const modelService = accessor.get(IModelService);
+	const model = modelService.getModel(resource);
+	if (!model) {
+		throw illegalArgument();
+	}
+
+	// 查找打开此模型的编辑器
+	const editors = accessor.get(ICodeEditorService).listCodeEditors();
+	const editor = editors.find(editor => editor.getModel()?.uri.toString() === resource.toString());
+	if (!editor) {
+		return [];
+	}
+
+	const foldingController = FoldingController.get(editor);
+	if (!foldingController) {
+		return [];
+	}
+
+	const foldingModelPromise = foldingController.getFoldingModel();
+	if (!foldingModelPromise) {
+		return [];
+	}
+
+	const foldingModel = await foldingModelPromise;
+	if (!foldingModel) {
+		return [];
+	}
+
+	// 获取当前折叠状态
+	const foldingRanges = [];
+	const regions = foldingModel.regions;
+
+	for (let i = 0; i < regions.length; i++) {
+		const startLineNumber = regions.getStartLineNumber(i);
+		const endLineNumber = regions.getEndLineNumber(i);
+		const isCollapsed = regions.isCollapsed(i);
+		const type = regions.getType(i);
+
+		foldingRanges.push({
+			start: startLineNumber - 1, // 转换为0基索引
+			end: endLineNumber - 1,
+			kind: type ? type : undefined,
+			isCollapsed: isCollapsed
+		});
+	}
+
+	return foldingRanges;
 });

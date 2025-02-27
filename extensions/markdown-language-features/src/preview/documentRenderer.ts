@@ -122,40 +122,38 @@ export class MdDocumentRenderer {
 		const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === markdownDocument.uri.toString());
 
 		if (editor) {
-			// get folding ranges
-			const foldingRanges = await vscode.commands.executeCommand<vscode.FoldingRange[]>(
-				'vscode.executeFoldingRangeProvider',
-				markdownDocument.uri
-			) || [];
+			// get folding states
+			const foldingStates = await vscode.commands.executeCommand<{
+				start: number;
+				end: number;
+				kind?: string;
+				isCollapsed: boolean;
+			}[]>('_executeFoldingStateProvider', markdownDocument.uri) || [];
 
-			if (editor.visibleRanges.length > 0) {
-				for (const range of editor.visibleRanges) {
-					const text = markdownDocument.getText(range);
-					const lines = text.split('\n');
-					const processedText = lines.map((line, i) => {
-						const lineNumber = range.start.line + i + 1; // 1-based line number
-						// check if the current line is a folding start
-						const isFoldingStart = foldingRanges.some(fold =>
-							fold.start + 1 === lineNumber // 1-based line number
-						);
-						// allow-any-unicode-next-line
-						return (isFoldingStart ? '⁂' : '') + line + '  ';
-					}).join('\n');
-					filteredMarkdown += processedText + '\n';
+			// create a mapping for quick lookup of collapsed lines
+			const collapsedLines = new Set<number>();
+			for (const state of foldingStates) {
+				if (state.isCollapsed) {
+					// convert to 1-based index
+					collapsedLines.add(state.start + 1);
 				}
-			} else {
-				const text = markdownDocument.getText();
-				const lines = text.split('\n');
-				filteredMarkdown = lines.map((line, i) => {
-					const lineNumber = i + 1; // 1-based line number
-					// check if the current line is a folding start
-					const isFoldingStart = foldingRanges.some(fold =>
-						fold.start + 1 === lineNumber // 1-based line number
-					);
-					// allow-any-unicode-next-line
-					return (isFoldingStart ? '⁂' : '') + line + '  ';
-				}).join('\n');
 			}
+
+			const text = markdownDocument.getText();
+			const lines = text.replace(/\r\n/g, '\n').split('\n');
+			filteredMarkdown = lines.map((line, i) => {
+				const lineNumber = i + 1; // 1-based line number
+				// check if the current line is a folding start
+				const isFoldingStart = foldingStates.some(fold =>
+					fold.start + 1 === lineNumber
+				);
+				const isCollapsed = collapsedLines.has(lineNumber);
+
+				// use different symbols to represent folded and expanded states
+				// allow-any-unicode-next-line
+				return (isFoldingStart ? (isCollapsed ? '▶' : '▼') : '') + line + '  ';
+			}).join('\n');
+
 		} else {
 			const text = markdownDocument.getText();
 			const lines = text.split('\n');
