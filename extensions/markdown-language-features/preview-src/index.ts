@@ -12,6 +12,7 @@ import throttle = require('lodash.throttle');
 import morphdom from 'morphdom';
 import type { ToWebviewMessage } from '../types/previewMessaging';
 import { isOfScheme, Schemes } from '../src/util/schemes';
+import { initFolding } from './folding';
 
 let scrollDisabledCount = 0;
 
@@ -113,6 +114,9 @@ onceDocumentLoaded(() => {
 	if (typeof settings.settings.selectedLine === 'number') {
 		marker.onDidChangeTextEditorSelection(settings.settings.selectedLine, documentVersion);
 	}
+
+	// Initialize folding
+	initFolding(messaging);
 });
 
 const onUpdateView = (() => {

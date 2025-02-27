@@ -156,6 +156,10 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 					vscode.window.showWarningMessage(
 						vscode.l10n.t("Could not load 'markdown.styles': {0}", e.unloadedStyles.join(', ')));
 					break;
+
+				case 'toggleFolding':
+					this._toggleFolding(e.line, e.isCollapsed);
+					break;
 			}
 		}));
 
@@ -425,6 +429,32 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 		}
 
 		return this._opener.openDocumentLink(href, this.resource);
+	}
+
+	private async _toggleFolding(lineNumber: number, isCollapsed: boolean): Promise<void> {
+		// 获取当前预览的源文档
+		const sourceUri = this.resource;
+		if (!sourceUri) {
+			return;
+		}
+
+		// 查找对应的编辑器
+		const editor = vscode.window.visibleTextEditors.find(
+			editor => editor.document.uri.toString() === sourceUri.toString()
+		);
+
+		if (editor) {
+			// 执行折叠/展开命令
+			await vscode.commands.executeCommand(
+				isCollapsed ? 'editor.unfold' : 'editor.fold',
+				{
+					selectionLines: [lineNumber]
+				}
+			);
+
+			// 刷新预览以反映新的折叠状态
+			this.refresh();
+		}
 	}
 
 	//#region WebviewResourceProvider
