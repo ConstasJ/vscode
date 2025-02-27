@@ -12,7 +12,6 @@ import throttle = require('lodash.throttle');
 import morphdom from 'morphdom';
 import type { ToWebviewMessage } from '../types/previewMessaging';
 import { isOfScheme, Schemes } from '../src/util/schemes';
-import { initFolding } from './folding';
 
 let scrollDisabledCount = 0;
 
@@ -114,9 +113,6 @@ onceDocumentLoaded(() => {
 	if (typeof settings.settings.selectedLine === 'number') {
 		marker.onDidChangeTextEditorSelection(settings.settings.selectedLine, documentVersion);
 	}
-
-	// Initialize folding
-	initFolding(messaging);
 });
 
 const onUpdateView = (() => {
@@ -364,6 +360,18 @@ document.addEventListener('click', event => {
 			}
 
 			return;
+		}
+		const foldingIndicator = node.closest('.folding-indicator');
+		if (foldingIndicator) {
+			const lineAttr = foldingIndicator.getAttribute('data-line');
+			if (lineAttr) {
+				const lineNumber = parseInt(lineAttr, 10);
+				const isCollapsed = foldingIndicator.querySelector('.codicon-chevron-right') !== null;
+				messaging.postMessage('toggleFolding', {
+					line: lineNumber,
+					isCollapsed: isCollapsed
+				});
+			}
 		}
 		node = node.parentNode;
 	}
