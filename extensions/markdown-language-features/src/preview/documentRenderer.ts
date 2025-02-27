@@ -122,7 +122,7 @@ export class MdDocumentRenderer {
 		const editor = vscode.window.visibleTextEditors.find(editor => editor.document.uri.toString() === markdownDocument.uri.toString());
 
 		if (editor) {
-			// get folding states
+			// 获取折叠状态
 			const foldingStates = await vscode.commands.executeCommand<{
 				start: number;
 				end: number;
@@ -130,29 +130,68 @@ export class MdDocumentRenderer {
 				isCollapsed: boolean;
 			}[]>('_executeFoldingStateProvider', markdownDocument.uri) || [];
 
-			// create a mapping for quick lookup of collapsed lines
+			// 创建快速查找折叠行的映射
 			const collapsedLines = new Set<number>();
+			const collapsedCodeBlockRanges = new Set<string>(); // 存储被折叠的代码块范围
+
 			for (const state of foldingStates) {
 				if (state.isCollapsed) {
-					// convert to 1-based index
+					// 转换为1-based索引
 					collapsedLines.add(state.start + 1);
+
+					// 检查是否是代码块折叠
+					// 我们需要检查这一行是否以 ``` 或 ~~~ 开头
+					const startLineNumber = state.start;
+					const text = markdownDocument.getText(new vscode.Range(
+						startLineNumber, 0,
+						startLineNumber, markdownDocument.lineAt(startLineNumber).text.length
+					)).trim();
+
+					if (text.startsWith('```') || text.startsWith('~~~')) {
+						// 存储代码块的整个范围，包括第一行
+						collapsedCodeBlockRanges.add(`${state.start + 1}:${state.end + 1}`);
+					}
 				}
 			}
 
 			const text = markdownDocument.getText();
 			const lines = text.replace(/\r\n/g, '\n').split('\n');
 			filteredMarkdown = lines.map((line, i) => {
-				const lineNumber = i + 1; // 1-based line number
-				// check if the current line is a folding start
-				const isFoldingStart = foldingStates.some(fold =>
-					fold.start + 1 === lineNumber
-				);
+				const lineNumber = i + 1; // 1-based行号
+
+				// 检查当前行是否在任何折叠的代码块范围内
+				const isInCodeBlock = Array.from(collapsedCodeBlockRanges).some(range => {
+					const [start, end] = range.split(':').map(Number);
+					return lineNumber >= start && lineNumber <= end;
+				});
+
+				// 如果在折叠的代码块内，直接忽略此行（包括第一行）
+				if (isInCodeBlock) {
+					return null;
+				}
+
+				const foldingStart = foldingStates.find(fold => fold.start + 1 === lineNumber);
+				const isFoldingStart = !!foldingStart;
 				const isCollapsed = collapsedLines.has(lineNumber);
 
-				// use different symbols to represent folded and expanded states
+				if (isCollapsed && isFoldingStart) {
+					// 对于普通折叠区域（非代码块），显示折叠指示符
+					return '▶' + line + '  ';
+				}
+
+				const isInsideCollapsedRegion = foldingStates.some(fold =>
+					collapsedLines.has(fold.start + 1) &&
+					lineNumber > fold.start + 1 &&
+					lineNumber <= fold.end + 1
+				);
+
+				if (isInsideCollapsedRegion) {
+					return null;
+				}
+
 				// allow-any-unicode-next-line
 				return (isFoldingStart ? (isCollapsed ? '▶' : '▼') : '') + line + '  ';
-			}).join('\n');
+			}).filter(line => line !== null).join('\n');
 
 		} else {
 			const text = markdownDocument.getText();
