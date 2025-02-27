@@ -10989,6 +10989,17 @@ declare module 'vscode' {
 		export const tabGroups: TabGroups;
 
 		/**
+		 * All editors in the current window, including visible and hidden ones.
+		 */
+		export const allEditors: readonly TextEditor[];
+
+		/**
+		 * An {@link Event} which fires when the {@link window.allEditors all editors}
+		 * have changed.
+		 */
+		export const onDidChangeAllEditors: Event<readonly TextEditor[]>;
+
+		/**
 		 * The currently active editor or `undefined`. The active editor is the one
 		 * that currently has focus or, when none has focus, the one that has changed
 		 * input most recently.

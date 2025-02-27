@@ -681,6 +681,12 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 			get visibleTextEditors() {
 				return extHostEditors.getVisibleTextEditors();
 			},
+			get allEditors() {
+				return extHostEditors.getAllTextEditors();
+			},
+			get onDidChangeAllEditors() {
+				return _asExtensionEvent(extHostEditors.onDidChangeAllEditors);
+			},
 			get activeTerminal() {
 				return extHostTerminalService.activeTerminal;
 			},
