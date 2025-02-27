@@ -260,7 +260,7 @@ export class MdDocumentRenderer {
 	}
 
 	private _getCodiconStyles(resourceProvider: WebviewResourceProvider): string {
-		return `<link rel="stylesheet" href="${escapeAttribute(resourceProvider.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css')))}">`;
+		return `<link rel="stylesheet" href="${escapeAttribute(resourceProvider.asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, 'media', 'codicon.css')))}">`;
 	}
 
 	private _getSettingsOverrideStyles(config: MarkdownPreviewConfiguration): string {
