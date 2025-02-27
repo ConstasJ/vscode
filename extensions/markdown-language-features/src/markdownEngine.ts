@@ -449,8 +449,10 @@ export class MarkdownItEngine implements IMdParser {
 			}
 			token.map = [startLine, startLine + 1];
 
-			state.tShift[startLine]++;
+			state.bMarks[startLine]++;
 			return true;
+		}, {
+			alt: ['paragraph', 'reference', 'blockquote', 'list']
 		});
 	}
 
