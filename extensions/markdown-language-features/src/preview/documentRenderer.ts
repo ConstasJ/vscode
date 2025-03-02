@@ -133,11 +133,15 @@ export class MdDocumentRenderer {
 			// 创建快速查找折叠行的映射
 			const collapsedLines = new Set<number>();
 			const collapsedCodeBlockRanges = new Set<string>(); // 存储被折叠的代码块范围
+			// 存储每个折叠区域的范围
+			const collapsedRanges: { start: number; end: number }[] = [];
 
 			for (const state of foldingStates) {
 				if (state.isCollapsed) {
 					// 转换为1-based索引
 					collapsedLines.add(state.start + 1);
+					// 记录整个范围
+					collapsedRanges.push({ start: state.start + 1, end: state.end + 1 });
 
 					// 检查是否是代码块折叠
 					// 我们需要检查这一行是否以 ``` 或 ~~~ 开头
@@ -153,6 +157,15 @@ export class MdDocumentRenderer {
 					}
 				}
 			}
+
+			// 对折叠区域进行排序，先处理最外层的
+			collapsedRanges.sort((a, b) => {
+				// 如果一个区域包含另一个，将包含者放在前面
+				if (a.start <= b.start && a.end >= b.end) { return -1; }
+				if (b.start <= a.start && b.end >= a.end) { return 1; }
+				// 否则按开始行排序
+				return a.start - b.start;
+			});
 
 			const text = markdownDocument.getText();
 			const lines = text.replace(/\r\n/g, '\n').split('\n');
@@ -170,29 +183,29 @@ export class MdDocumentRenderer {
 					return null;
 				}
 
+				// 检查该行是否在某个外层折叠区域内部
+				// 查找包含当前行但不是以当前行开始的折叠区域
+				const isInsideOuterCollapsedRegion = collapsedRanges.some(range =>
+					range.start < lineNumber && lineNumber <= range.end && collapsedLines.has(range.start)
+				);
+
+				// 如果在某个已折叠的外层区域内，直接忽略
+				if (isInsideOuterCollapsedRegion) {
+					return null;
+				}
+
 				const foldingStart = foldingStates.find(fold => fold.start + 1 === lineNumber);
 				const isFoldingStart = !!foldingStart;
 				const isCollapsed = collapsedLines.has(lineNumber);
 
 				if (isCollapsed && isFoldingStart) {
-					// 对于普通折叠区域（非代码块），显示折叠指示符
+					// 对于普通折叠区域的开始行，显示折叠指示符
 					return '▶' + line + '  ';
-				}
-
-				const isInsideCollapsedRegion = foldingStates.some(fold =>
-					collapsedLines.has(fold.start + 1) &&
-					lineNumber > fold.start + 1 &&
-					lineNumber <= fold.end + 1
-				);
-
-				if (isInsideCollapsedRegion) {
-					return null;
 				}
 
 				// allow-any-unicode-next-line
 				return (isFoldingStart ? (isCollapsed ? '▶' : '▼') : '') + line + '  ';
 			}).filter(line => line !== null).join('\n');
-
 		} else {
 			const text = markdownDocument.getText();
 			const lines = text.split('\n');
