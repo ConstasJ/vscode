@@ -4,15 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { coalesce } from '../../../../base/common/arrays.js';
-import { ThemeIcon } from '../../../../base/common/themables.js';
-import { URI } from '../../../../base/common/uri.js';
-import { Location } from '../../../../editor/common/languages.js';
-import { IViewsService } from '../../../services/views/common/viewsService.js';
-import { ChatAgentLocation } from '../common/chatAgents.js';
 import { IChatRequestVariableData, IChatRequestVariableEntry } from '../common/chatModel.js';
 import { ChatRequestDynamicVariablePart, ChatRequestToolPart, IParsedChatRequest } from '../common/chatParserTypes.js';
 import { IChatVariablesService, IDynamicVariable } from '../common/chatVariables.js';
-import { IChatWidgetService, showChatView, showEditsView } from './chat.js';
+import { IChatWidgetService } from './chat.js';
 import { ChatDynamicVariableModel } from './contrib/chatDynamicVariables.js';
 
 export class ChatVariablesService implements IChatVariablesService {
@@ -20,19 +15,15 @@ export class ChatVariablesService implements IChatVariablesService {
 
 	constructor(
 		@IChatWidgetService private readonly chatWidgetService: IChatWidgetService,
-		@IViewsService private readonly viewsService: IViewsService,
-	) {
-	}
+	) { }
 
 	resolveVariables(prompt: IParsedChatRequest, attachedContextVariables: IChatRequestVariableEntry[] | undefined): IChatRequestVariableData {
 		let resolvedVariables: IChatRequestVariableEntry[] = [];
 
 		prompt.parts
 			.forEach((part, i) => {
-				if (part instanceof ChatRequestDynamicVariablePart) {
-					resolvedVariables[i] = { id: part.id, name: part.referenceText, range: part.range, value: part.data, fullName: part.fullName, icon: part.icon, isFile: part.isFile };
-				} else if (part instanceof ChatRequestToolPart) {
-					resolvedVariables[i] = { id: part.toolId, name: part.toolName, range: part.range, value: undefined, isTool: true, icon: ThemeIcon.isThemeIcon(part.icon) ? part.icon : undefined, fullName: part.displayName };
+				if (part instanceof ChatRequestDynamicVariablePart || part instanceof ChatRequestToolPart) {
+					resolvedVariables[i] = part.toVariableEntry();
 				}
 			});
 
@@ -71,24 +62,4 @@ export class ChatVariablesService implements IChatVariablesService {
 		return model.variables;
 	}
 
-	async attachContext(name: string, value: string | URI | Location, location: ChatAgentLocation) {
-		if (location !== ChatAgentLocation.Panel && location !== ChatAgentLocation.EditingSession) {
-			return;
-		}
-
-		const widget = location === ChatAgentLocation.EditingSession
-			? await showEditsView(this.viewsService)
-			: (this.chatWidgetService.lastFocusedWidget ?? await showChatView(this.viewsService));
-		if (!widget || !widget.viewModel) {
-			return;
-		}
-
-		const key = name.toLowerCase();
-		if (key === 'file' && typeof value !== 'string') {
-			const uri = URI.isUri(value) ? value : value.uri;
-			const range = 'range' in value ? value.range : undefined;
-			widget.attachmentModel.addFile(uri, range);
-			return;
-		}
-	}
 }

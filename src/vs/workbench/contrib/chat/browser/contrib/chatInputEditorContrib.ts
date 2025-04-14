@@ -4,10 +4,12 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { MarkdownString } from '../../../../../base/common/htmlContent.js';
-import { Disposable, MutableDisposable } from '../../../../../base/common/lifecycle.js';
+import { Disposable, MutableDisposable, toDisposable } from '../../../../../base/common/lifecycle.js';
+import { themeColorFromId } from '../../../../../base/common/themables.js';
 import { ICodeEditorService } from '../../../../../editor/browser/services/codeEditorService.js';
 import { Range } from '../../../../../editor/common/core/range.js';
 import { IDecorationOptions } from '../../../../../editor/common/editorCommon.js';
+import { TrackedRangeStickiness } from '../../../../../editor/common/model.js';
 import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { inputPlaceholderForeground } from '../../../../../platform/theme/common/colorRegistry.js';
 import { IThemeService } from '../../../../../platform/theme/common/themeService.js';
@@ -46,8 +48,7 @@ class InputEditorDecorations extends Disposable {
 
 		this.codeEditorService.registerDecorationType(decorationDescription, placeholderDecorationType, {});
 
-		this._register(this.themeService.onDidColorThemeChange(() => this.updateRegisteredDecorationTypes()));
-		this.updateRegisteredDecorationTypes();
+		this.registeredDecorationTypes();
 
 		this.updateInputEditorDecorations();
 		this._register(this.widget.inputEditor.onDidChangeModelContent(() => this.updateInputEditorDecorations()));
@@ -73,28 +74,30 @@ class InputEditorDecorations extends Disposable {
 		});
 	}
 
-	private updateRegisteredDecorationTypes() {
-		this.codeEditorService.removeDecorationType(variableTextDecorationType);
-		this.codeEditorService.removeDecorationType(dynamicVariableDecorationType);
-		this.codeEditorService.removeDecorationType(slashCommandTextDecorationType);
+	private registeredDecorationTypes() {
 
-		const theme = this.themeService.getColorTheme();
 		this.codeEditorService.registerDecorationType(decorationDescription, slashCommandTextDecorationType, {
-			color: theme.getColor(chatSlashCommandForeground)?.toString(),
-			backgroundColor: theme.getColor(chatSlashCommandBackground)?.toString(),
+			color: themeColorFromId(chatSlashCommandForeground),
+			backgroundColor: themeColorFromId(chatSlashCommandBackground),
 			borderRadius: '3px'
 		});
 		this.codeEditorService.registerDecorationType(decorationDescription, variableTextDecorationType, {
-			color: theme.getColor(chatSlashCommandForeground)?.toString(),
-			backgroundColor: theme.getColor(chatSlashCommandBackground)?.toString(),
+			color: themeColorFromId(chatSlashCommandForeground),
+			backgroundColor: themeColorFromId(chatSlashCommandBackground),
 			borderRadius: '3px'
 		});
 		this.codeEditorService.registerDecorationType(decorationDescription, dynamicVariableDecorationType, {
-			color: theme.getColor(chatSlashCommandForeground)?.toString(),
-			backgroundColor: theme.getColor(chatSlashCommandBackground)?.toString(),
-			borderRadius: '3px'
+			color: themeColorFromId(chatSlashCommandForeground),
+			backgroundColor: themeColorFromId(chatSlashCommandBackground),
+			borderRadius: '3px',
+			rangeBehavior: TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
 		});
-		this.updateInputEditorDecorations();
+
+		this._register(toDisposable(() => {
+			this.codeEditorService.removeDecorationType(variableTextDecorationType);
+			this.codeEditorService.removeDecorationType(dynamicVariableDecorationType);
+			this.codeEditorService.removeDecorationType(slashCommandTextDecorationType);
+		}));
 	}
 
 	private getPlaceholderColor(): string | undefined {
@@ -112,7 +115,7 @@ class InputEditorDecorations extends Disposable {
 		}
 
 		if (!inputValue) {
-			const defaultAgent = this.chatAgentService.getDefaultAgent(this.widget.location);
+			const defaultAgent = this.chatAgentService.getDefaultAgent(this.widget.location, this.widget.input.currentMode);
 			const decoration: IDecorationOptions[] = [
 				{
 					range: {
@@ -301,7 +304,7 @@ class ChatTokenDeleter extends Disposable {
 
 			// If this was a simple delete, try to find out whether it was inside a token
 			if (!change.text && this.widget.viewModel) {
-				const previousParsedValue = parser.parseChatRequest(this.widget.viewModel.sessionId, previousInputValue, widget.location, { selectedAgent: previousSelectedAgent });
+				const previousParsedValue = parser.parseChatRequest(this.widget.viewModel.sessionId, previousInputValue, widget.location, { selectedAgent: previousSelectedAgent, mode: this.widget.input.currentMode });
 
 				// For dynamic variables, this has to happen in ChatDynamicVariableModel with the other bookkeeping
 				const deletableTokens = previousParsedValue.parts.filter(p => p instanceof ChatRequestAgentPart || p instanceof ChatRequestAgentSubcommandPart || p instanceof ChatRequestSlashCommandPart || p instanceof ChatRequestToolPart);

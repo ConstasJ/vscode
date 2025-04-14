@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ChatAgentLocation } from '../../common/chatAgents.js';
 import { IChatRequestVariableData, IChatRequestVariableEntry } from '../../common/chatModel.js';
 import { IParsedChatRequest } from '../../common/chatParserTypes.js';
 import { IChatVariablesService, IDynamicVariable } from '../../common/chatVariables.js';
@@ -19,9 +18,5 @@ export class MockChatVariablesService implements IChatVariablesService {
 		return {
 			variables: []
 		};
-	}
-
-	attachContext(name: string, value: unknown, location: ChatAgentLocation): void {
-		throw new Error('Method not implemented.');
 	}
 }

@@ -1,7 +1,7 @@
 import { filepaths } from '../../helpers/filepaths';
 
 const completionSpec: Fig.Spec = {
-	name: ["python", "python3"],
+	name: "python",
 	description: "Run the python interpreter",
 	generateSpec: async (tokens, executeShellCommand) => {
 		const isDjangoManagePyFilePresentCommand = "cat manage.py | grep -q django";
@@ -21,6 +21,7 @@ const completionSpec: Fig.Spec = {
 	},
 	args: {
 		name: "python script",
+		isScript: true,
 		generators: filepaths({
 			extensions: ["py"],
 			editFileSuggestions: { priority: 76 },

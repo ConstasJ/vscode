@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// version: 3
+// version: 7
 
 declare module 'vscode' {
 
@@ -27,10 +27,6 @@ declare module 'vscode' {
 		 * Code editor inline chat
 		 */
 		Editor = 4,
-		/**
-		 * Chat is happening in an editing session
-		 */
-		EditingSession = 5,
 	}
 
 	export class ChatRequestEditorData {
@@ -50,6 +46,10 @@ declare module 'vscode' {
 	}
 
 	export interface ChatRequest {
+		/**
+		 * The id of the chat request. Used to identity an interaction with any of the chat surfaces.
+		 */
+		readonly id: string;
 		/**
 		 * The attempt number of the request. The first request has attempt number 0.
 		 */
@@ -83,6 +83,12 @@ declare module 'vscode' {
 		supportIssueReporting?: boolean;
 	}
 
+	export enum ChatErrorLevel {
+		Info = 0,
+		Warning = 1,
+		Error = 2,
+	}
+
 	export interface ChatErrorDetails {
 		/**
 		 * If set to true, the message content is completely hidden. Only ChatErrorDetails#message will be shown.
@@ -90,6 +96,8 @@ declare module 'vscode' {
 		responseIsRedacted?: boolean;
 
 		isQuotaExceeded?: boolean;
+
+		level?: ChatErrorLevel;
 	}
 
 	export namespace chat {
@@ -116,11 +124,30 @@ declare module 'vscode' {
 
 	export interface LanguageModelToolInvocationOptions<T> {
 		chatRequestId?: string;
+		chatSessionId?: string;
+		chatInteractionId?: string;
+		terminalCommand?: string;
 	}
 
 	export interface PreparedToolInvocation {
 		pastTenseMessage?: string | MarkdownString;
-		presentation?: 'withCodeblocks' | 'hidden' | undefined;
+		presentation?: 'hidden' | undefined;
+	}
+
+	export interface LanguageModelTool<T> {
+		prepareInvocation2?(options: LanguageModelToolInvocationPrepareOptions<T>, token: CancellationToken): ProviderResult<PreparedTerminalToolInvocation>;
+	}
+
+	export class PreparedTerminalToolInvocation {
+		readonly command: string;
+		readonly language: string;
+		readonly confirmationMessages?: LanguageModelToolConfirmationMessages;
+
+		constructor(
+			command: string,
+			language: string,
+			confirmationMessages?: LanguageModelToolConfirmationMessages,
+		);
 	}
 
 	export class ExtendedLanguageModelToolResult extends LanguageModelToolResult {
@@ -147,6 +174,8 @@ declare module 'vscode' {
 
 	export namespace chat {
 		export function registerChatParticipantDetectionProvider(participantDetectionProvider: ChatParticipantDetectionProvider): Disposable;
+
+		export const onDidDisposeChatSession: Event<string>;
 	}
 
 	// #endregion
