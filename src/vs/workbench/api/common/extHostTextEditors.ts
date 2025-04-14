@@ -24,6 +24,7 @@ export class ExtHostEditors extends Disposable implements ExtHostEditorsShape {
 	private readonly _onDidChangeTextEditorDiffInformation = new Emitter<vscode.TextEditorDiffInformationChangeEvent>();
 	private readonly _onDidChangeActiveTextEditor = new Emitter<vscode.TextEditor | undefined>();
 	private readonly _onDidChangeVisibleTextEditors = new Emitter<readonly vscode.TextEditor[]>();
+	private readonly _onDidChangeAllEditors = new Emitter<readonly vscode.TextEditor[]>();
 
 	readonly onDidChangeTextEditorSelection: Event<vscode.TextEditorSelectionChangeEvent> = this._onDidChangeTextEditorSelection.event;
 	readonly onDidChangeTextEditorOptions: Event<vscode.TextEditorOptionsChangeEvent> = this._onDidChangeTextEditorOptions.event;
@@ -32,6 +33,7 @@ export class ExtHostEditors extends Disposable implements ExtHostEditorsShape {
 	readonly onDidChangeTextEditorDiffInformation: Event<vscode.TextEditorDiffInformationChangeEvent> = this._onDidChangeTextEditorDiffInformation.event;
 	readonly onDidChangeActiveTextEditor: Event<vscode.TextEditor | undefined> = this._onDidChangeActiveTextEditor.event;
 	readonly onDidChangeVisibleTextEditors: Event<readonly vscode.TextEditor[]> = this._onDidChangeVisibleTextEditors.event;
+	readonly onDidChangeAllEditors: Event<readonly vscode.TextEditor[]> = this._onDidChangeAllEditors.event;
 
 	private readonly _proxy: MainThreadTextEditorsShape;
 
@@ -57,6 +59,10 @@ export class ExtHostEditors extends Disposable implements ExtHostEditorsShape {
 		return internal
 			? editors
 			: editors.map(editor => editor.value);
+	}
+
+	getAllTextEditors(): vscode.TextEditor[] {
+		return this._extHostDocumentsAndEditors.allEditors().map(editor => editor.value);
 	}
 
 	showTextDocument(document: vscode.TextDocument, column: vscode.ViewColumn, preserveFocus: boolean): Promise<vscode.TextEditor>;

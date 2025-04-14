@@ -161,6 +161,8 @@ export class MarkdownItEngine implements IMdParser {
 				this._addLinkValidator(md);
 				this._addNamedHeaders(md);
 				this._addLinkRenderer(md);
+				this._addFoldingIndicatorRenderer(md);
+				this._addFoldingIndicatorParser(md);
 				md.use(pluginSourceMap);
 				return md;
 			})();
@@ -410,6 +412,51 @@ export class MarkdownItEngine implements IMdParser {
 			return href;
 		}
 	}
+
+	private _addFoldingIndicatorRenderer(md: MarkdownIt): void {
+		md.renderer.rules['folding_indicator'] = (tokens: Token[], idx: number, _options, _env, _self) => {
+			const token = tokens[idx];
+			const lineAttr = token.attrGet('data-line');
+			const lineNumber = lineAttr ? ` data-line="${lineAttr}"` : '';
+			const buttonType = token.markup === '▶' ? 'codicon-chevron-right' : 'codicon-chevron-down';
+
+			return `<span class="folding-indicator"${lineNumber}><span class="codicon ${buttonType}"></span></span>`;
+		};
+	}
+
+	private _addFoldingIndicatorParser(md: MarkdownIt): void {
+		md.block.ruler.before('table', 'folding_indicator', (state, startLine, _endLine, silent) => {
+			// get the start position of the current line (already considering the indentation)
+			const pos = state.bMarks[startLine] + state.tShift[startLine];
+			// check if it's the first character
+			if (state.src.charCodeAt(pos) !== 0x25B6 && state.src.charCodeAt(pos) !== 0x25BC) { return false; }
+
+			if (silent) { return true; }
+
+			let token: Token;
+
+			switch (state.src.charCodeAt(pos)) {
+				case 0x25B6:
+					token = state.push('folding_indicator', 'fi', 0);
+					token.markup = '▶';
+					break;
+				case 0x25BC:
+					token = state.push('folding_indicator', 'fi', 0);
+					token.markup = '▼';
+					break;
+				default:
+					return false;
+			}
+			token.map = [startLine, startLine + 1];
+
+			state.bMarks[startLine]++;
+			return true;
+		}, {
+			alt: ['paragraph', 'reference', 'blockquote', 'list']
+		});
+	}
+
+
 }
 
 async function getMarkdownOptions(md: () => MarkdownIt): Promise<MarkdownIt.Options> {

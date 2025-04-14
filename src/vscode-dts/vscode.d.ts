@@ -1376,6 +1376,13 @@ declare module 'vscode' {
 		 * This method shows unexpected behavior and will be removed in the next major update.
 		 */
 		hide(): void;
+
+		/**
+		  * 折叠指定行的代码
+		  * @param lineNumber 要折叠的行号(0-based)
+		  * @param isCollapsed 是否折叠,true表示折叠,false表示展开
+		  */
+		setFoldingState(lineNumber: number, isCollapsed: boolean): Thenable<void>;
 	}
 
 	/**
@@ -5725,6 +5732,16 @@ declare module 'vscode' {
 		 * @param kind The kind of the folding range.
 		 */
 		constructor(start: number, end: number, kind?: FoldingRangeKind);
+	}
+
+	/**
+	 * 折叠状态
+	 */
+	export interface FoldingState extends FoldingRange {
+		/**
+		  * Whether the range is currently collapsed.
+		  */
+		isCollapsed: boolean;
 	}
 
 	/**
@@ -11005,6 +11022,17 @@ declare module 'vscode' {
 		 * Represents the grid widget within the main editor area
 		 */
 		export const tabGroups: TabGroups;
+
+		/**
+		 * All editors in the current window, including visible and hidden ones.
+		 */
+		export const allEditors: readonly TextEditor[];
+
+		/**
+		 * An {@link Event} which fires when the {@link window.allEditors all editors}
+		 * have changed.
+		 */
+		export const onDidChangeAllEditors: Event<readonly TextEditor[]>;
 
 		/**
 		 * The currently active editor or `undefined`. The active editor is the one

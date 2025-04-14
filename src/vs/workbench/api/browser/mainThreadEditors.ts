@@ -36,6 +36,7 @@ import { LineRangeMapping } from '../../../editor/common/diff/rangeMapping.js';
 import { equals } from '../../../base/common/arrays.js';
 import { Event } from '../../../base/common/event.js';
 import { DiffAlgorithmName } from '../../../editor/common/services/editorWorker.js';
+import { FoldingController } from '../../../editor/contrib/folding/browser/folding.js';
 
 export interface IMainThreadEditorLocator {
 	getEditor(id: string): MainThreadTextEditor | undefined;
@@ -403,6 +404,36 @@ export class MainThreadTextEditors implements MainThreadTextEditorsShape {
 			return Promise.resolve(scmQuickDiffChanges.map(change => change.change) ?? []);
 		} finally {
 			quickDiffModelRef.dispose();
+		}
+	}
+
+	async $trySetFoldingState(id: string, lineNumber: number, isCollapsed: boolean): Promise<void> {
+		const editor = this._editorLocator.getEditor(id);
+		if (!editor) {
+			return;
+		}
+
+		const codeEditor = editor.getCodeEditor();
+		if (!codeEditor) {
+			return;
+		}
+
+		const foldingController = FoldingController.get(codeEditor);
+		if (!foldingController) {
+			return;
+		}
+
+		// 获取折叠模型
+		const foldingModel = await foldingController.getFoldingModel();
+		if (!foldingModel) {
+			return;
+		}
+
+		// 获取要折叠的区域
+		const region = foldingModel.getRegionAtLine(lineNumber + 1); // 转换为1-based
+		if (region) {
+			// 设置折叠状态
+			foldingModel.toggleCollapseState([region]);
 		}
 	}
 }

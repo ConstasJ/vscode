@@ -366,6 +366,11 @@ export class MainThreadDocumentsAndEditors {
 			extHostDelta.addedEditors = addedEditors.map(e => this._toTextEditorAddData(e));
 		}
 
+		if (delta.addedEditors.length > 0) {
+			empty = false;
+			extHostDelta.addedEditors = addedEditors.map(e => this._toTextEditorAddData(e));
+		}
+
 		if (!empty) {
 			// first update ext host
 			this._proxy.$acceptDocumentsAndEditorsDelta(extHostDelta);

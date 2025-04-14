@@ -38,6 +38,12 @@ export namespace FromWebviewMessage {
 		readonly unloadedStyles: readonly string[];
 	}
 
+	export interface ToggleFolding extends BaseMessage {
+		readonly type: 'toggleFolding';
+		readonly line: number;
+		readonly isCollapsed: boolean;
+	}
+
 	export type Type =
 		| CacheImageSizes
 		| RevealLine
@@ -45,7 +51,7 @@ export namespace FromWebviewMessage {
 		| ClickLink
 		| ShowPreviewSecuritySelector
 		| PreviewStyleLoadError
-		;
+		| ToggleFolding;
 }
 
 export namespace ToWebviewMessage {
