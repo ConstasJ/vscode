@@ -185,6 +185,18 @@
         "title": "%markdown.editor.insertImageFromWorkspace%",
         "category": "Markdown",
         "enablement": "editorLangId == markdown && !activeEditorIsReadonly"
+      },
+      {
+        "command": "markdown.exportFiltered",
+        "title": "%markdown.exportFiltered.title%",
+        "category": "Markdown",
+        "icon": "$(export)"
+      },
+      {
+        "command": "markdown.exportRenderedHTML",
+        "title": "%markdown.exportRenderedHTML.title%",
+        "category": "Markdown",
+        "icon": "$(export)"
       }
     ],
     "menus": {
@@ -224,6 +236,16 @@
           "command": "markdown.showPreviewSecuritySelector",
           "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor'",
           "group": "1_markdown"
+        },
+        {
+          "command": "markdown.exportFiltered",
+          "when": "editorLangId == markdown && !notebookEditorFocused && !hasCustomMarkdownPreview",
+          "group": "navigation"
+        },
+        {
+          "command": "markdown.exportRenderedHTML",
+          "when": "activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor'",
+          "group": "navigation"
         }
       ],
       "explorer/context": [

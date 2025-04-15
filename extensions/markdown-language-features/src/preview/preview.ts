@@ -432,22 +432,22 @@ class MarkdownPreview extends Disposable implements WebviewResourceProvider {
 	}
 
 	private async _toggleFolding(lineNumber: number, isCollapsed: boolean): Promise<void> {
-		// 获取当前预览的源文档
+		// Get the source document of the current preview
 		const sourceUri = this.resource;
 		if (!sourceUri) {
 			return;
 		}
 
-		// 查找对应的编辑器
+		// Look for the editor that corresponds to the source document
 		const editor = vscode.window.visibleTextEditors.find(
 			editor => editor.document.uri.toString() === sourceUri.toString()
 		);
 
 		if (editor) {
-			// 执行折叠/展开命令
+			// Execute the folding command
 			editor.setFoldingState(lineNumber, isCollapsed);
 
-			// 刷新预览以反映新的折叠状态
+			// Refresh the preview to reflect the changes
 			this.refresh(true);
 		}
 	}
@@ -731,6 +731,10 @@ export class DynamicMarkdownPreview extends Disposable implements IManagedMarkdo
 
 	public get resourceColumn() {
 		return this._resourceColumn;
+	}
+
+	public get webview() {
+		return this._webviewPanel;
 	}
 
 	public reveal(viewColumn: vscode.ViewColumn) {
